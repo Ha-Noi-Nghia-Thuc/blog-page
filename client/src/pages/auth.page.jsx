@@ -9,45 +9,24 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import AnimationWrapper from "@/lib/animation-wrapper";
+import {
+  authSignInSchema,
+  authSignUpSchema,
+} from "@/validations/auth.validation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
-import { z } from "zod";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const AuthPage = ({ formType }) => {
-  const authFormSchema = z
-    .object({
-      firstName: z
-        .string()
-        .min(2, "Tên phải có ít nhất 2 ký tự")
-        .max(50, "Tên không được dài quá 50 ký tự")
-        .regex(/^[\p{L}\s'-]+$/u, "Tên không hợp lệ"),
-      lastName: z
-        .string()
-        .min(2, "Họ và tên đệm phải có ít nhất 2 ký tự")
-        .max(50, "Họ và tên đệm không được dài quá 50 ký tự")
-        .regex(/^[\p{L}\s'-]+$/u, "Họ và tên đệm không hợp lệ"),
-      email: z.string().email("Email không hợp lệ"),
-
-      password: z
-        .string()
-        .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
-        .max(100, "Mật khẩu không được vượt quá 100 ký tự")
-        .regex(/[a-z]/, "Phải có ít nhất 1 chữ thường")
-        .regex(/[A-Z]/, "Phải có ít nhất 1 chữ in hoa")
-        .regex(/[0-9]/, "Phải có ít nhất 1 chữ số")
-        .regex(/[^a-zA-Z0-9]/, "Phải có ít nhất 1 ký tự đặc biệt"),
-
-      confirmPassword: z.string(),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      path: ["confirmPassword"],
-      message: "Mật khẩu nhập lại không khớp",
-    });
+  const navigate = useNavigate();
 
   const authForm = useForm({
-    resolver: zodResolver(authFormSchema),
+    resolver: zodResolver(
+      formType === "sign-in" ? authSignInSchema : authSignUpSchema
+    ),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -57,6 +36,81 @@ const AuthPage = ({ formType }) => {
     },
   });
 
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (values) => {
+      try {
+        const payload =
+          formType === "sign-in"
+            ? {
+                email: values.email,
+                password: values.password,
+              }
+            : {
+                firstName: values.firstName,
+                lastName: values.lastName,
+                email: values.email,
+                password: values.password,
+                confirmPassword: values.confirmPassword,
+              };
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_DOMAIN}/auth/${formType}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
+        }
+
+        return data;
+      } catch (error) {
+        throw new Error(error.message || "Lỗi kết nối đến máy chủ.");
+      }
+    },
+
+    onSuccess: (data) => {
+      toast.dismiss();
+
+      const message =
+        data.message ||
+        (formType === "sign-in"
+          ? "Đăng nhập thành công!"
+          : "Đăng ký thành công!");
+
+      toast.success(message);
+
+      if (data.user?.token) {
+        localStorage.setItem("token", data.user.token);
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
+      }
+    },
+
+    onError: (error) => {
+      toast.dismiss();
+
+      const message =
+        error?.message ||
+        (formType === "sign-in"
+          ? "Đăng nhập thất bại. Vui lòng thử lại."
+          : "Đăng ký thất bại. Vui lòng thử lại.");
+
+      toast.error(message);
+      console.error("Lỗi xác thực:", error);
+    },
+  });
+
+  const onSubmit = (values) => {
+    mutate(values);
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [formType]);
@@ -65,26 +119,27 @@ const AuthPage = ({ formType }) => {
     <AnimationWrapper keyValue={formType}>
       <div className="min-h-screen flex items-center justify-center">
         <Form {...authForm}>
-          <form className="w-[80%] max-w-[400px]">
+          <form
+            onSubmit={authForm.handleSubmit(onSubmit)}
+            className="w-[80%] max-w-[400px]"
+          >
             <h1 className="text-4xl font-heading capitalize text-center mb-12">
-              {formType === "sign-in" ? "Welcome back!" : "Join us today"}
+              {formType === "sign-in" ? "Chào mừng trở lại!" : "Tham gia ngay"}
             </h1>
 
-            {/* Form Fields */}
             <div className="flex flex-col gap-7 w-[80%] mx-auto">
               {formType !== "sign-in" && (
                 <>
-                  {/* First name field */}
                   <FormField
                     control={authForm.control}
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-right">Tên</FormLabel>
+                        <FormLabel>Tên</FormLabel>
                         <FormControl>
                           <Input
                             type="text"
-                            placeholder="Nhập Tên"
+                            placeholder="Nhập tên"
                             {...field}
                           />
                         </FormControl>
@@ -92,18 +147,16 @@ const AuthPage = ({ formType }) => {
                       </FormItem>
                     )}
                   />
-
-                  {/* Last name field */}
                   <FormField
                     control={authForm.control}
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Họ và Tên đệm</FormLabel>
+                        <FormLabel>Họ và tên đệm</FormLabel>
                         <FormControl>
                           <Input
                             type="text"
-                            placeholder="Nhập Họ và Tên đệm"
+                            placeholder="Nhập họ và tên đệm"
                             {...field}
                           />
                         </FormControl>
@@ -114,17 +167,16 @@ const AuthPage = ({ formType }) => {
                 </>
               )}
 
-              {/* Email field */}
               <FormField
                 control={authForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Địa chỉ Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="Nhập địa chỉ Email"
+                        placeholder="Nhập địa chỉ email"
                         {...field}
                       />
                     </FormControl>
@@ -133,7 +185,6 @@ const AuthPage = ({ formType }) => {
                 )}
               />
 
-              {/* Password field */}
               <FormField
                 control={authForm.control}
                 name="password"
@@ -153,13 +204,12 @@ const AuthPage = ({ formType }) => {
               />
 
               {formType !== "sign-in" && (
-                /* Confirm password field */
                 <FormField
                   control={authForm.control}
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nhập lại Mật khẩu</FormLabel>
+                      <FormLabel>Nhập lại mật khẩu</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
@@ -174,11 +224,18 @@ const AuthPage = ({ formType }) => {
               )}
             </div>
 
-            <Button className="block w-[50%] mx-auto mt-10" type="submit">
-              {formType === "sign-in" ? "Đăng nhập" : "Đăng ký"}
+            <Button
+              className="block w-[50%] mx-auto mt-10"
+              type="submit"
+              disabled={isPending}
+            >
+              {isPending
+                ? "Đang xử lý..."
+                : formType === "sign-in"
+                ? "Đăng nhập"
+                : "Đăng ký"}
             </Button>
 
-            {/* Separator */}
             <div className="relative w-full flex items-center gap-2 my-10 opacity-10 uppercase text-black font-bold">
               <hr className="w-1/2 border-black" />
               <p>hoặc</p>
@@ -188,25 +245,28 @@ const AuthPage = ({ formType }) => {
             <Button
               variant="outline"
               className="flex items-center justify-center gap-4 w-[90%] mx-auto"
+              type="button"
             >
-              Continue With Google
+              Tiếp tục với Google
             </Button>
 
-            {formType === "sign-in" ? (
-              <p className="mt-6 text-dark-grey text-center">
-                Chưa có tài khoản?{" "}
-                <Link to="/sign-up" className="underline text-black ml-1">
-                  Đăng ký ngay
-                </Link>
-              </p>
-            ) : (
-              <p className="mt-6 text-dark-grey text-center">
-                Đã có tài khoản?{" "}
-                <Link to="/sign-in" className="underline text-black ml-1">
-                  Đăng nhập
-                </Link>
-              </p>
-            )}
+            <p className="mt-6 text-dark-grey text-center">
+              {formType === "sign-in" ? (
+                <>
+                  Chưa có tài khoản?
+                  <Link to="/sign-up" className="underline text-black ml-1">
+                    Đăng ký ngay
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Đã có tài khoản?
+                  <Link to="/sign-in" className="underline text-black ml-1">
+                    Đăng nhập
+                  </Link>
+                </>
+              )}
+            </p>
           </form>
         </Form>
       </div>

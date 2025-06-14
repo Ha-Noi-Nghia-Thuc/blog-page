@@ -1,3 +1,4 @@
+import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import { connectDatabase } from "./lib/connect-database.js";
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middlewares
 app.use(express.json());
+app.use(cors());
 
 // Routes
 app.use(`${API_PREFIX}/auth`, authRoutes);
