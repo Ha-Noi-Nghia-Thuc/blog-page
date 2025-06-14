@@ -2,6 +2,10 @@ import { Route, Routes } from "react-router-dom";
 import Header from "./components/layout/header";
 import AuthPage from "./pages/auth.page";
 import { Toaster } from "sonner";
+import { createContext, useEffect, useState } from "react";
+import { lookInSession } from "./lib/session";
+
+export const UserContext = createContext({});
 
 function App() {
   return (

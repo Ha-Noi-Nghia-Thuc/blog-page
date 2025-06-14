@@ -1,3 +1,4 @@
+import { UserContext } from "@/App";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -9,18 +10,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import AnimationWrapper from "@/lib/animation-wrapper";
+import { lookInSession, storeInSession } from "@/lib/session";
+import { AuthContext } from "@/providers/auth.provider";
 import {
   authSignInSchema,
   authSignUpSchema,
 } from "@/validations/auth.validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 const AuthPage = ({ formType }) => {
+  const { setUserAuth } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const authForm = useForm({
@@ -86,10 +90,9 @@ const AuthPage = ({ formType }) => {
       toast.success(message);
 
       if (data.user?.token) {
-        localStorage.setItem("token", data.user.token);
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
+        storeInSession("user", data.user);
+        setUserAuth(data.user);
+        navigate("/");
       }
     },
 
@@ -112,8 +115,12 @@ const AuthPage = ({ formType }) => {
   };
 
   useEffect(() => {
+    const token = lookInSession("user")?.token;
+    if (token) {
+      navigate("/");
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [formType]);
+  }, [formType, navigate]);
 
   return (
     <AnimationWrapper keyValue={formType}>

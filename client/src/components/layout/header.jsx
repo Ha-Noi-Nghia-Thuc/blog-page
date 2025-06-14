@@ -1,11 +1,32 @@
-import { Pen, SearchIcon } from "lucide-react";
-import React, { useState } from "react";
+import { Bell, Pen, SearchIcon } from "lucide-react";
+import React, { useContext, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+} from "../ui/dropdown-menu";
+import { Avatar, AvatarImage } from "../ui/avatar";
+import { removeFromSession } from "@/lib/session";
+import { AuthContext } from "@/providers/auth.provider";
 
 const Header = () => {
   const [openSearchBox, setOpenSearchBox] = useState(false);
+  const {
+    userAuth: { token, first_name, last_name, username, profile_img },
+    setUserAuth,
+  } = useContext(AuthContext);
+
+  const signOutUser = () => {
+    removeFromSession("user");
+    setUserAuth({ token: null });
+  };
 
   return (
     <>
@@ -47,24 +68,109 @@ const Header = () => {
             <SearchIcon height={16} width={16} className="text-gray-500" />
           </Button>
 
-          <Link to={"/editor"} className="hidden md:flex gap-2 ">
-            <Button variant="ghost" className="cursor-pointer">
-              <Pen height={16} width={16} />
-              <p>Viết</p>
-            </Button>
-          </Link>
+          {token && (
+            <Link to={"/editor"} className="hidden md:flex gap-2 ">
+              <Button variant="ghost" className="cursor-pointer">
+                <Pen height={16} width={16} />
+                <p>Viết bài</p>
+              </Button>
+            </Link>
+          )}
 
-          <Link to={"/sign-in"}>
-            <Button variant="default" className="cursor-pointer">
-              Đăng nhập
-            </Button>
-          </Link>
+          {token ? (
+            <>
+              <Link to="dashboard/notification">
+                <Button
+                  variant="secondary"
+                  className="w-12 h-12 cursor-pointer rounded-full"
+                >
+                  <Bell height={16} width={16} />
+                </Button>
+              </Link>
 
-          <Link to={"/sign-up"} className="hidden md:block ">
-            <Button variant="outline" className="cursor-pointer">
-              Đăng ký
-            </Button>
-          </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="h-12 w-12 cursor-pointer border border-gray-100">
+                    <AvatarImage src={profile_img} alt={username} />
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="bg-white border border-gray-100 shadow-lg rounded-xl mt-3 w-60 p-2 right-4 md:right-[5vw]"
+                  side="bottom"
+                  align="end"
+                >
+                  <DropdownMenuLabel className="px-3 py-2 text-base">
+                    {`${last_name} ${first_name}`}
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator className="my-2 border-gray-100" />
+
+                  <DropdownMenuGroup className="flex flex-col gap-1">
+                    <div className="md:hidden">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/editor"
+                          className="px-3 py-2 rounded-md hover:bg-gray-100 transition"
+                        >
+                          Viết bài
+                        </Link>
+                      </DropdownMenuItem>
+                    </div>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to={`/user/${username}`}
+                        className="px-3 py-2 rounded-md hover:bg-gray-100 transition"
+                      >
+                        Trang cá nhân
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/dashboard/blogs"
+                        className="px-3 py-2 rounded-md hover:bg-gray-100 transition"
+                      >
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/settings/edit-profile"
+                        className="px-3 py-2 hover:bg-gray-100 transition"
+                      >
+                        Cài đặt
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuSeparator className="my-2 border-gray-100" />
+
+                  <DropdownMenuItem
+                    className="text-red-600! px-3 py-2 rounded-md hover:bg-red-50 cursor-pointer transition"
+                    onClick={signOutUser}
+                  >
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <Link to={"/sign-in"}>
+                <Button variant="default" className="cursor-pointer">
+                  Đăng nhập
+                </Button>
+              </Link>
+
+              <Link to={"/sign-up"} className="hidden md:block ">
+                <Button variant="outline" className="cursor-pointer">
+                  Đăng ký
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
