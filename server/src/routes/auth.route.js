@@ -1,8 +1,8 @@
 import express from "express";
 import {
-  signIn,
-  signInWithGoogle,
-  signUp,
+  handleGoogleSignIn,
+  handleSignIn,
+  handleSignUp,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middlewares/validate.js";
 import {
@@ -12,8 +12,8 @@ import {
 
 const router = express.Router();
 
-router.post("/sign-up", validate(authSignUpSchema), signUp);
-router.post("/sign-in", validate(authSignInSchema), signIn);
-router.post("/google-auth", signInWithGoogle);
+router.post("/sign-up", validate(authSignUpSchema), handleSignUp);
+router.post("/sign-in", validate(authSignInSchema), handleSignIn);
+router.post("/google-auth", handleGoogleSignIn);
 
 export default router;

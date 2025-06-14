@@ -1,6 +1,12 @@
 import { model, Schema } from "mongoose";
 
-let profile_imgs_name_list = [
+const profileImageCollections = [
+  "notionists-neutral",
+  "adventurer-neutral",
+  "fun-emoji",
+];
+
+const profileImageNames = [
   "Garfield",
   "Tinkerbell",
   "Annie",
@@ -22,135 +28,96 @@ let profile_imgs_name_list = [
   "Felix",
   "Kiki",
 ];
-let profile_imgs_collections_list = [
-  "notionists-neutral",
-  "adventurer-neutral",
-  "fun-emoji",
-];
+
+const generateDefaultProfileImage = () => {
+  const collection =
+    profileImageCollections[
+      Math.floor(Math.random() * profileImageCollections.length)
+    ];
+  const name =
+    profileImageNames[Math.floor(Math.random() * profileImageNames.length)];
+  return `https://api.dicebear.com/6.x/${collection}/svg?seed=${name}`;
+};
 
 const userSchema = new Schema(
   {
     personal_info: {
       first_name: {
         type: String,
-        required: [true, "Tên là bắt buộc"],
-        minlength: [2, "Tên phải có ít nhất 2 ký tự"],
-        maxlength: [50, "Tên không được dài quá 50 ký tự"],
-        match: [/^[\p{L}\s'-]+$/u, "Tên không hợp lệ"],
+        required: [true, "First name is required"],
+        minlength: [2, "First name must be at least 2 characters"],
+        maxlength: [50, "First name cannot exceed 50 characters"],
         trim: true,
       },
       last_name: {
         type: String,
-        required: [true, "Họ và tên đệm là bắt buộc"],
-        minlength: [2, "Họ và tên đệm phải có ít nhất 2 ký tự"],
-        maxlength: [50, "Họ và tên đệm không được dài quá 50 ký tự"],
-        match: [/^[\p{L}\s'-]+$/u, "Họ và tên đệm không hợp lệ"],
+        required: [true, "Last name is required"],
+        minlength: [2, "Last name must be at least 2 characters"],
+        maxlength: [50, "Last name cannot exceed 50 characters"],
         trim: true,
       },
       email: {
         type: String,
-        required: [true, "Email là bắt buộc"],
+        required: [true, "Email is required"],
         unique: true,
         lowercase: true,
         trim: true,
-        match: [/\S+@\S+\.\S+/, "Email không hợp lệ"],
+        match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
       },
       password: {
         type: String,
         required: function () {
           return !this.google_auth;
         },
-        minlength: [8, "Mật khẩu phải có ít nhất 8 ký tự"],
-        maxlength: [100, "Mật khẩu không được vượt quá 100 ký tự"],
-        validate: {
-          validator: function (v) {
-            // Skip validation if this is a Google auth user
-            if (this.google_auth) {
-              return true;
-            }
-            // Only validate if password exists
-            if (!v) return false;
-            return (
-              /[a-z]/.test(v) &&
-              /[A-Z]/.test(v) &&
-              /[0-9]/.test(v) &&
-              /[^a-zA-Z0-9]/.test(v)
-            );
-          },
-          message:
-            "Mật khẩu phải chứa chữ thường, chữ in hoa, số và ký tự đặc biệt",
-        },
+        minlength: [8, "Password must be at least 8 characters"],
+        maxlength: [100, "Password cannot exceed 100 characters"],
       },
       username: {
         type: String,
-        minlength: [3, "Tên người dùng phải có ít nhất 3 ký tự"],
+        required: [true, "Username is required"],
         unique: true,
+        minlength: [3, "Username must be at least 3 characters"],
+        maxlength: [30, "Username cannot exceed 30 characters"],
+        lowercase: true,
+        trim: true,
+        match: [
+          /^[a-z0-9_-]+$/,
+          "Username can only contain lowercase letters, numbers, hyphens, and underscores",
+        ],
       },
       bio: {
         type: String,
-        maxlength: [200, "Bio không được dài quá 200 ký tự"],
+        maxlength: [200, "Bio cannot exceed 200 characters"],
         default: "",
+        trim: true,
       },
       profile_img: {
         type: String,
-        default: () => {
-          return `https://api.dicebear.com/6.x/${
-            profile_imgs_collections_list[
-              Math.floor(Math.random() * profile_imgs_collections_list.length)
-            ]
-          }/svg?seed=${
-            profile_imgs_name_list[
-              Math.floor(Math.random() * profile_imgs_name_list.length)
-            ]
-          }`;
-        },
+        default: generateDefaultProfileImage,
       },
     },
     social_links: {
-      youtube: {
-        type: String,
-        default: "",
-      },
-      instagram: {
-        type: String,
-        default: "",
-      },
-      facebook: {
-        type: String,
-        default: "",
-      },
-      twitter: {
-        type: String,
-        default: "",
-      },
-      github: {
-        type: String,
-        default: "",
-      },
-      website: {
-        type: String,
-        default: "",
-      },
+      youtube: { type: String, default: "", trim: true },
+      instagram: { type: String, default: "", trim: true },
+      facebook: { type: String, default: "", trim: true },
+      twitter: { type: String, default: "", trim: true },
+      github: { type: String, default: "", trim: true },
+      website: { type: String, default: "", trim: true },
     },
     account_info: {
-      total_posts: {
-        type: Number,
-        default: 0,
-      },
-      total_reads: {
-        type: Number,
-        default: 0,
-      },
+      total_posts: { type: Number, default: 0, min: 0 },
+      total_reads: { type: Number, default: 0, min: 0 },
     },
     google_auth: {
       type: Boolean,
       default: false,
     },
-    blogs: {
-      type: [Schema.Types.ObjectId],
-      ref: "blogs",
-      default: [],
-    },
+    blogs: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Blog",
+      },
+    ],
   },
   {
     timestamps: {
@@ -158,5 +125,8 @@ const userSchema = new Schema(
     },
   }
 );
+
+// Indexes for better performance
+userSchema.index({ google_auth: 1 });
 
 export default model("User", userSchema);
