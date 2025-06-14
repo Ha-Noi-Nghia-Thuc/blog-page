@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import AnimationWrapper from "@/lib/animation-wrapper";
 import { lookInSession, storeInSession } from "@/lib/session";
 import { AuthContext } from "@/providers/auth.provider";
+import { googleAuth } from "@/providers/google-auth.provider";
 import {
   authSignInSchema,
   authSignUpSchema,
@@ -22,6 +23,7 @@ import { useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import googleIcon from "@/assets/icons/google.svg";
 
 const AuthPage = ({ formType }) => {
   const { setUserAuth } = useContext(AuthContext);
@@ -39,6 +41,54 @@ const AuthPage = ({ formType }) => {
       confirmPassword: "",
     },
   });
+
+  const handleGoogleAuth = async (e) => {
+    e.preventDefault();
+
+    try {
+      const result = await googleAuth();
+
+      if (!result?.user || !result?.token) {
+        toast.error("Xác thực Google thất bại.");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/auth/google-auth`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ token: result.token }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      toast.success("Đăng nhập Google thành công!");
+      storeInSession("user", data.user);
+      setUserAuth(data.user);
+      navigate("/");
+    } catch (err) {
+      // More specific error messages
+      if (err.name === "TypeError" && err.message.includes("Failed to fetch")) {
+        toast.error(
+          "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng."
+        );
+      } else if (err.message.includes("Server error")) {
+        toast.error("Lỗi server: " + err.message);
+      } else {
+        toast.error("Xác thực Google thất bại: " + err.message);
+      }
+    }
+  };
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values) => {
@@ -106,7 +156,6 @@ const AuthPage = ({ formType }) => {
           : "Đăng ký thất bại. Vui lòng thử lại.");
 
       toast.error(message);
-      console.error("Lỗi xác thực:", error);
     },
   });
 
@@ -134,7 +183,7 @@ const AuthPage = ({ formType }) => {
               {formType === "sign-in" ? "Chào mừng trở lại!" : "Tham gia ngay"}
             </h1>
 
-            <div className="flex flex-col gap-7 w-[80%] mx-auto">
+            <div className="flex flex-col gap-7 w-[90%] mx-auto">
               {formType !== "sign-in" && (
                 <>
                   <FormField
@@ -253,7 +302,10 @@ const AuthPage = ({ formType }) => {
               variant="outline"
               className="flex items-center justify-center gap-4 w-[90%] mx-auto"
               type="button"
+              onClick={handleGoogleAuth}
+              aria-disabled={isPending}
             >
+              <img src={googleIcon} alt="Google" className="w-5 h-5" />
               Tiếp tục với Google
             </Button>
 

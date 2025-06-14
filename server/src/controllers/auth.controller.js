@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { formatResponseData } from "../lib/format-response-data.js";
 import { generateUsername } from "../lib/generate-username.js";
 import User from "../models/user.model.js";
+import { getAuth } from "firebase-admin/auth";
 
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -71,6 +72,64 @@ export const signIn = async (req, res) => {
     console.error("Lỗi khi đăng nhập:", error);
     return res.status(500).json({
       message: "Lỗi máy chủ",
+      error: error.message,
+    });
+  }
+};
+
+export const signInWithGoogle = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Verify Token
+    const decodedUser = await getAuth().verifyIdToken(token);
+
+    let { name, email, picture } = decodedUser;
+    picture = picture?.replace("s96-c", "s384-c") || "";
+
+    let user = await User.findOne({
+      "personal_info.email": email,
+    }).select(
+      "personal_info.first_name personal_info.last_name personal_info.username personal_info.profile_img google_auth"
+    );
+
+    // If user exist but not sign in with Google
+    if (user && !user.google_auth) {
+      return res
+        .status(403)
+        .json({ message: "Tài khoản này không hỗ trợ đăng nhập bằng Google." });
+    }
+
+    // Create new User
+    if (!user) {
+      const username = await generateUsername(email);
+      const nameParts = name?.split(" ") || [];
+      const firstName = nameParts.pop();
+      const lastName = nameParts.join(" ");
+
+      const newUser = new User({
+        personal_info: {
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          username,
+          profile_img: picture,
+        },
+        google_auth: true,
+      });
+
+      await newUser.save();
+      user = newUser;
+    }
+
+    return res.status(200).json({
+      message: "Đăng nhập Google thành công",
+      user: formatResponseData(user),
+    });
+  } catch (error) {
+    console.error("Lỗi đăng nhập Google:", error);
+    return res.status(500).json({
+      message: "Lỗi xác thực Google",
       error: error.message,
     });
   }

@@ -57,11 +57,19 @@ const userSchema = new Schema(
       },
       password: {
         type: String,
-        required: [true, "Mật khẩu là bắt buộc"],
+        required: function () {
+          return !this.google_auth;
+        },
         minlength: [8, "Mật khẩu phải có ít nhất 8 ký tự"],
         maxlength: [100, "Mật khẩu không được vượt quá 100 ký tự"],
         validate: {
           validator: function (v) {
+            // Skip validation if this is a Google auth user
+            if (this.google_auth) {
+              return true;
+            }
+            // Only validate if password exists
+            if (!v) return false;
             return (
               /[a-z]/.test(v) &&
               /[A-Z]/.test(v) &&
