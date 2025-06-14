@@ -1,0 +1,37 @@
+# Ignore node modules in both client and server
+client/node_modules/
+server/node_modules/
+
+# Ignore build output
+client/build/
+server/build/
+server/dist/
+
+# Ignore environment variable files
+client/.env
+client/.env.*.local
+server/.env
+server/.env.*.local
+
+# IDE and OS-specific files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Optional: ignore coverage or test output
+coverage/
+*.test.*
+jest-coverage/
+
+# Optional: ignore local database or temporary dev data
+tmp/
+*.local.db
+
+# Optional: ignore dependency lockfiles (if not using lockfile pinning)
+# yarn.lock
+# package-lock.json

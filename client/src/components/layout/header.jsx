@@ -61,7 +61,7 @@ const Header = () => {
           </Link>
 
           <Link to={"/sign-up"} className="hidden md:block ">
-            <Button variant="secondary" className="cursor-pointer">
+            <Button variant="outline" className="cursor-pointer">
               Đăng ký
             </Button>
           </Link>
