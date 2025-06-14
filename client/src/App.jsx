@@ -1,10 +1,15 @@
-import { Button } from "@/components/ui/button";
+import { Route, Routes } from "react-router-dom";
+import Header from "./components/layout/header";
+import AuthPage from "./pages/auth.page";
 
 function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button variant="outline">Click me</Button>
-    </div>
+    <Routes>
+      <Route path="/" element={<Header />}>
+        <Route path="/sign-in" element={<AuthPage formType="sign-in" />} />
+        <Route path="/sign-up" element={<AuthPage formType="sign-up" />} />
+      </Route>
+    </Routes>
   );
 }
 

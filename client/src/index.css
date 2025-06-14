@@ -1,9 +1,24 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "EB Garamond";
+  src: url("./assets/fonts/EB_Garamond/static/EBGaramond-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Merriweather";
+  src: url("./assets/fonts/Merriweather/static/Merriweather_120pt-Regular.ttf");
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Custom */
+  --font-heading: "EB Garamond", "serif";
+  --font-body: "Merriweather", "serif";
+
+  /* Shadcn UI */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -112,9 +127,18 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply text-sm font-body border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Utilities */
+  .hide {
+    @apply opacity-0 pointer-events-none duration-100;
+  }
+
+  .show {
+    @apply opacity-100 pointer-events-auto;
   }
 }
