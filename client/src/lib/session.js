@@ -1,19 +1,18 @@
 export const storeInSession = (key, value) => {
   try {
-    const json = JSON.stringify(value);
-    sessionStorage.setItem(key, json);
+    const serializedValue = JSON.stringify(value);
+    sessionStorage.setItem(key, serializedValue);
   } catch (error) {
-    console.error("Lỗi khi lưu vào session:", error);
+    console.error("Failed to store in session:", error);
   }
 };
 
 export const lookInSession = (key) => {
   try {
     const item = sessionStorage.getItem(key);
-    if (!item) return null;
-    return JSON.parse(item);
+    return item ? JSON.parse(item) : null;
   } catch (error) {
-    console.error("Lỗi khi đọc session:", error);
+    console.error("Failed to read from session:", error);
     return null;
   }
 };
@@ -22,14 +21,14 @@ export const removeFromSession = (key) => {
   try {
     sessionStorage.removeItem(key);
   } catch (error) {
-    console.error("Lỗi khi xóa session:", error);
+    console.error("Failed to remove from session:", error);
   }
 };
 
-export const logOutUser = () => {
+export const clearSession = () => {
   try {
     sessionStorage.clear();
   } catch (error) {
-    console.error("Lỗi khi đăng xuất:", error);
+    console.error("Failed to clear session:", error);
   }
 };

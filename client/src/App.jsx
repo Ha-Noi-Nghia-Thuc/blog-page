@@ -1,11 +1,7 @@
 import { Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import Header from "./components/layout/header";
 import AuthPage from "./pages/auth.page";
-import { Toaster } from "sonner";
-import { createContext, useEffect, useState } from "react";
-import { lookInSession } from "./lib/session";
-
-export const UserContext = createContext({});
 
 function App() {
   return (
@@ -16,7 +12,40 @@ function App() {
           <Route path="/sign-up" element={<AuthPage formType="sign-up" />} />
         </Route>
       </Routes>
-      <Toaster position="bottom-right" richColors closeButton duration={1000} />
+      <Toaster
+        position="bottom-right"
+        closeButton
+        duration={3000}
+        toastOptions={{
+          style: {
+            fontFamily: "var(--font-body)",
+          },
+          success: {
+            style: {
+              background: "#f0f0f0",
+              color: "#333",
+            },
+          },
+          error: {
+            style: {
+              background: "#333",
+              color: "#f0f0f0",
+            },
+          },
+          info: {
+            style: {
+              background: "#e0e0e0",
+              color: "#444",
+            },
+          },
+          warning: {
+            style: {
+              background: "#d0d0d0",
+              color: "#555",
+            },
+          },
+        }}
+      />
     </>
   );
 }

@@ -1,155 +1,151 @@
-import { Bell, Pen, SearchIcon } from "lucide-react";
-import React, { useContext, useState } from "react";
+import { removeFromSession } from "@/lib/session";
+import { AuthContext } from "@/providers/auth.provider";
+import { Bell, Pen, Search } from "lucide-react";
+import { useContext, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
+import { Avatar, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import {
   DropdownMenu,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Avatar, AvatarImage } from "../ui/avatar";
-import { removeFromSession } from "@/lib/session";
-import { AuthContext } from "@/providers/auth.provider";
+import { Input } from "../ui/input";
 
 const Header = () => {
-  const [openSearchBox, setOpenSearchBox] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const {
     userAuth: { token, first_name, last_name, username, profile_img },
     setUserAuth,
   } = useContext(AuthContext);
 
-  const signOutUser = () => {
+  const handleSignOut = () => {
     removeFromSession("user");
-    setUserAuth({ token: null });
+    setUserAuth({
+      token: null,
+      first_name: "",
+      last_name: "",
+      username: "",
+      profile_img: "",
+    });
   };
+
+  const toggleSearch = () => setIsSearchOpen((prev) => !prev);
 
   return (
     <>
-      {/* Navbar */}
-      <nav className="z-10 sticky top-0 flex items-center gap-12 w-full px-[5vw] py-5 h-[80px] border-b border-gray-100 bg-white">
+      <nav className="sticky top-0 z-10 flex items-center gap-12 w-full px-[5vw] py-5 h-20 border-b border-gray-100 bg-white">
         {/* Logo */}
-        <Link to="/" className="flex-none w-auto">
-          <span className="text-2xl font-bold font-heading">
+        <Link to="/" className="flex-none">
+          <span className="text-2xl font-bold font-heading text-gray-900">
             Hà Nội Nghĩa Thục
           </span>
         </Link>
 
         {/* Search Box */}
         <div
-          className={`absolute bg-white w-full left-0 top-full mt-0.5 border-b border-gray-100 py-4 px-[5vw] md:border-0 md:block md:relative md:inset-0 md:p-0 md:w-auto  ${
-            openSearchBox ? "show" : "hide"
-          } md:show`}
+          className={`absolute bg-white w-full left-0 top-full mt-0.5 border-b border-gray-100 py-4 px-[5vw] md:border-0 md:block md:relative md:inset-0 md:p-0 md:w-auto transition-all duration-200 ${
+            isSearchOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto"
+          }`}
         >
-          <Input
-            type="text"
-            placeholder="Tìm bài viết"
-            className="w-full md:w-auto bg-gray-100 p-4 pl-6 pr-[12%] md:pr-6 rounded-full placeholder:text-gray-500 md:pl-12"
-          />
-
-          <SearchIcon
-            height={16}
-            width={16}
-            className="absolute right-[10%] md:pointer-events-none md:left-5 top-1/2 -translate-y-1/2 text-2xl text-gray-500 cursor-pointer"
-          />
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Tìm kiếm bài viết..."
+              className="w-full md:w-auto bg-gray-50 pl-12 pr-4 py-3 rounded-full border-0 placeholder:text-gray-500 focus:bg-white focus:ring-2 focus:ring-gray-200"
+            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex items-center gap-3 md:gap-6 ml-auto">
+        {/* Actions */}
+        <div className="flex items-center gap-3 ml-auto">
+          {/* Mobile Search Toggle */}
           <Button
-            variant="secondary"
-            className="md:hidden w-12 h-12 rounded-full flex items-center justify-center cursor-pointer"
-            onClick={() => setOpenSearchBox((currentVal) => !currentVal)}
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={toggleSearch}
           >
-            <SearchIcon height={16} width={16} className="text-gray-500" />
+            <Search className="w-4 h-4" />
           </Button>
-
-          {token && (
-            <Link to={"/editor"} className="hidden md:flex gap-2 ">
-              <Button variant="ghost" className="cursor-pointer">
-                <Pen height={16} width={16} />
-                <p>Viết bài</p>
-              </Button>
-            </Link>
-          )}
 
           {token ? (
             <>
-              <Link to="dashboard/notification">
-                <Button
-                  variant="secondary"
-                  className="w-12 h-12 cursor-pointer rounded-full"
-                >
-                  <Bell height={16} width={16} />
+              {/* Write Button */}
+              <Link to="/editor" className="hidden md:flex">
+                <Button variant="ghost" className="gap-2">
+                  <Pen className="w-4 h-4" />
+                  Viết bài
                 </Button>
               </Link>
 
+              {/* Notifications */}
+              <Link to="/dashboard/notifications">
+                <Button variant="ghost" size="icon">
+                  <Bell className="w-4 h-4" />
+                </Button>
+              </Link>
+
+              {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Avatar className="h-12 w-12 cursor-pointer border border-gray-100">
-                    <AvatarImage src={profile_img} alt={username} />
+                  <Avatar className="h-10 w-10 cursor-pointer border border-gray-200 hover:border-gray-300 transition-colors">
+                    <AvatarImage
+                      src={profile_img || "/placeholder.svg?height=40&width=40"}
+                      alt={username || "User avatar"}
+                    />
                   </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="bg-white border border-gray-100 shadow-lg rounded-xl mt-3 w-60 p-2 right-4 md:right-[5vw]"
-                  side="bottom"
-                  align="end"
-                >
-                  <DropdownMenuLabel className="px-3 py-2 text-base">
-                    {`${last_name} ${first_name}`}
+                <DropdownMenuContent className="w-60 mt-2" align="end">
+                  <DropdownMenuLabel className="font-medium">
+                    {`${last_name} ${first_name}`.trim() || "Người dùng"}
                   </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
 
-                  <DropdownMenuSeparator className="my-2 border-gray-100" />
-
-                  <DropdownMenuGroup className="flex flex-col gap-1">
+                  <DropdownMenuGroup>
                     <div className="md:hidden">
                       <DropdownMenuItem asChild>
-                        <Link
-                          to="/editor"
-                          className="px-3 py-2 rounded-md hover:bg-gray-100 transition"
-                        >
+                        <Link to="/editor" className="cursor-pointer">
+                          <Pen className="w-4 h-4 mr-2" />
                           Viết bài
                         </Link>
                       </DropdownMenuItem>
                     </div>
 
                     <DropdownMenuItem asChild>
-                      <Link
-                        to={`/user/${username}`}
-                        className="px-3 py-2 rounded-md hover:bg-gray-100 transition"
-                      >
+                      <Link to={`/user/${username}`} className="cursor-pointer">
                         Trang cá nhân
                       </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>
-                      <Link
-                        to="/dashboard/blogs"
-                        className="px-3 py-2 rounded-md hover:bg-gray-100 transition"
-                      >
-                        Dashboard
+                      <Link to="/dashboard/blogs" className="cursor-pointer">
+                        Bảng điều khiển
                       </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>
                       <Link
                         to="/settings/edit-profile"
-                        className="px-3 py-2 hover:bg-gray-100 transition"
+                        className="cursor-pointer"
                       >
                         Cài đặt
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
 
-                  <DropdownMenuSeparator className="my-2 border-gray-100" />
+                  <DropdownMenuSeparator />
 
                   <DropdownMenuItem
-                    className="text-red-600! px-3 py-2 rounded-md hover:bg-red-50 cursor-pointer transition"
-                    onClick={signOutUser}
+                    className="text-red-600 cursor-pointer focus:text-red-600"
+                    onClick={handleSignOut}
                   >
                     Đăng xuất
                   </DropdownMenuItem>
@@ -158,16 +154,11 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link to={"/sign-in"}>
-                <Button variant="default" className="cursor-pointer">
-                  Đăng nhập
-                </Button>
+              <Link to="/sign-in">
+                <Button>Đăng nhập</Button>
               </Link>
-
-              <Link to={"/sign-up"} className="hidden md:block ">
-                <Button variant="outline" className="cursor-pointer">
-                  Đăng ký
-                </Button>
+              <Link to="/sign-up" className="hidden md:block">
+                <Button variant="outline">Đăng ký</Button>
               </Link>
             </>
           )}

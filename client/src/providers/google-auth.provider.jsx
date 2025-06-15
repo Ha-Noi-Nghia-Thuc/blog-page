@@ -1,11 +1,10 @@
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import app from "@/config/firebase.config";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // Create Google provider instance with better configuration
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
   prompt: "select_account",
-  hd: undefined, // Remove domain restriction if any
 });
 
 // Initialize Firebase Auth
@@ -30,16 +29,19 @@ export const googleAuth = async () => {
     console.error("Google sign-in failed:", error);
 
     // Handle specific Firebase Auth errors
-    if (error.code === "auth/popup-closed-by-user") {
-      console.log("User closed the popup");
-    } else if (error.code === "auth/popup-blocked") {
-      console.log("Popup was blocked by browser");
-      // You could fallback to redirect here
-      // await signInWithRedirect(auth, provider);
-    } else if (error.code === "auth/cancelled-popup-request") {
-      console.log("Popup request was cancelled");
+    switch (error.code) {
+      case "auth/popup-closed-by-user":
+        throw new Error("popup-closed-by-user");
+      case "auth/popup-blocked":
+        throw new Error("popup-blocked");
+      case "auth/cancelled-popup-request":
+        throw new Error("cancelled-popup-request");
+      case "auth/network-request-failed":
+        throw new Error("Lỗi kết nối mạng");
+      case "auth/too-many-requests":
+        throw new Error("Quá nhiều yêu cầu. Vui lòng thử lại sau");
+      default:
+        throw new Error("Xác thực Google thất bại");
     }
-
-    throw error; // Re-throw to be handled by the calling component
   }
 };

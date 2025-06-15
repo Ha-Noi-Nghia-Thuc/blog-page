@@ -4,63 +4,58 @@ export const authSignUpSchema = z
   .object({
     firstName: z
       .string()
-      .min(1, "Vui lòng nhập tên")
-      .min(2, "Tên phải có ít nhất 2 ký tự")
-      .max(50, "Tên không được dài quá 50 ký tự")
+      .nonempty("Vui lòng nhập tên của bạn.")
+      .min(2, "Tên của bạn phải có ít nhất 2 ký tự.")
+      .max(50, "Tên của bạn không được dài quá 50 ký tự.")
       .regex(
         /^[\p{L}\s'-]+$/u,
-        "Tên chỉ được chứa chữ cái, dấu cách, dấu nháy và gạch ngang"
-      )
-      .trim(),
+        "Tên của bạn chỉ có thể chứa chữ cái, dấu cách, dấu gạch ngang hoặc dấu nháy đơn."
+      ),
 
     lastName: z
       .string()
-      .min(1, "Vui lòng nhập họ")
-      .min(2, "Họ phải có ít nhất 2 ký tự")
-      .max(50, "Họ không được dài quá 50 ký tự")
+      .nonempty("Vui lòng nhập họ và tên đệm của bạn.")
+      .min(2, "Họ và tên đệm của bạn phải có ít nhất 2 ký tự.")
+      .max(50, "Họ và tên đệm của bạn không được dài quá 50 ký tự.")
       .regex(
         /^[\p{L}\s'-]+$/u,
-        "Họ chỉ được chứa chữ cái, dấu cách, dấu nháy và gạch ngang"
-      )
-      .trim(),
+        "Họ và tên đệm của bạn chỉ có thể chứa chữ cái, dấu cách, dấu gạch ngang hoặc dấu nháy đơn."
+      ),
 
     email: z
       .string()
-      .min(1, "Vui lòng nhập email")
-      .email("Định dạng email không hợp lệ")
-      .max(100, "Email không được dài quá 100 ký tự")
-      .toLowerCase()
-      .trim(),
+      .nonempty("Vui lòng nhập địa chỉ email của bạn.")
+      .email("Địa chỉ email bạn nhập không hợp lệ. Vui lòng kiểm tra lại."),
 
     password: z
       .string()
-      .min(1, "Vui lòng nhập mật khẩu")
-      .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
-      .max(100, "Mật khẩu không được dài quá 100 ký tự")
-      .regex(/[a-z]/, "Mật khẩu phải có ít nhất 1 chữ thường")
-      .regex(/[A-Z]/, "Mật khẩu phải có ít nhất 1 chữ in hoa")
-      .regex(/[0-9]/, "Mật khẩu phải có ít nhất 1 chữ số")
-      .regex(/[^a-zA-Z0-9]/, "Mật khẩu phải có ít nhất 1 ký tự đặc biệt"),
+      .nonempty("Vui lòng nhập mật khẩu của bạn.")
+      .min(8, "Mật khẩu của bạn phải có ít nhất 8 ký tự.")
+      .max(100, "Mật khẩu của bạn không được dài quá 100 ký tự.")
+      .regex(/[a-z]/, "Mật khẩu phải chứa ít nhất một chữ cái thường.")
+      .regex(/[A-Z]/, "Mật khẩu phải chứa ít nhất một chữ cái in hoa.")
+      .regex(/[0-9]/, "Mật khẩu phải chứa ít nhất một chữ số.")
+      .regex(/[^a-zA-Z0-9]/, "Mật khẩu phải chứa ít nhất một ký tự đặc biệt."),
 
-    confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
+    confirmPassword: z
+      .string()
+      .nonempty("Vui lòng xác nhận lại mật khẩu của bạn."),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],
-    message: "Mật khẩu xác nhận không khớp",
+    message:
+      "Mật khẩu xác nhận không khớp với mật khẩu đã nhập. Vui lòng thử lại.",
   });
 
 export const authSignInSchema = z.object({
   email: z
     .string()
-    .min(1, "Vui lòng nhập email")
-    .email("Định dạng email không hợp lệ")
-    .max(100, "Email không được dài quá 100 ký tự")
-    .toLowerCase()
-    .trim(),
+    .nonempty("Vui lòng nhập địa chỉ email của bạn.")
+    .email("Địa chỉ email bạn nhập không hợp lệ. Vui lòng kiểm tra lại."),
 
   password: z
     .string()
-    .min(1, "Vui lòng nhập mật khẩu")
-    .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
-    .max(100, "Mật khẩu không được dài quá 100 ký tự"),
+    .nonempty("Vui lòng nhập mật khẩu của bạn.")
+    .min(8, "Mật khẩu của bạn phải có ít nhất 8 ký tự.")
+    .max(100, "Mật khẩu của bạn không được dài quá 100 ký tự."),
 });
